@@ -17,9 +17,9 @@ android {
     signingConfigs {
         create("release") {
             storeFile = rootProject.file("keystore/bbplus.keystore")
-            storePassword = "bbplus-bbplus"
-            keyAlias = "bbplus"
-            keyPassword = "bbplus-bbplus"
+            storePassword = providers.environmentVariable("BBPLUS_KEYSTORE_PASSWORD").getOrElse("bbplus-bbplus")
+            keyAlias = providers.environmentVariable("BBPLUS_KEY_ALIAS").getOrElse("bbplus")
+            keyPassword = providers.environmentVariable("BBPLUS_KEY_PASSWORD").getOrElse("bbplus-bbplus")
         }
     }
 
