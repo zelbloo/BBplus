@@ -2,6 +2,12 @@
 
 > 适配 libxposed API 102 的哔哩哔哩增强 Xposed 模组，全部由 AI 使用 Kotlin 编写。请优先选择[BBZQ](https://github.com/HSSkyBoy/BBZQ)，本模块是在其基础之上添加部分个人向功能。
 
+![Kotlin](https://img.shields.io/badge/Kotlin-2.4.10-7F52FF?logo=kotlin&logoColor=white)
+![API](https://img.shields.io/badge/libxposed-API%20102-orange)
+![License](https://img.shields.io/badge/license-Mulan%20PubL%20v2-blue)
+
+---
+
 ## 适配
 
 - 哔哩哔哩 9.7.0（tv.danmaku.bili），其余版本自行尝试
