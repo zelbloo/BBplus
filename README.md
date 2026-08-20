@@ -1,6 +1,6 @@
 # BBplus
 
-> 适配 libxposed API 102 的哔哩哔哩增强 Xposed 模组，Kotlin 编写。请优先选择[BBZQ](https://github.com/HSSkyBoy/BBZQ)，本模块是在其基础之上添加部分个人向功能。
+> 适配 libxposed API 102 的哔哩哔哩增强 Xposed 模组，全部由 AI 使用 Kotlin 编写。请优先选择[BBZQ](https://github.com/HSSkyBoy/BBZQ)，本模块是在其基础之上添加部分个人向功能。
 
 ## 适配
 
