@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application
+        android:label="BBplus"
+        android:allowBackup="false">
+        <meta-data
+            android:name="xposedminversion"
+            android:value="102" />
+        <meta-data
+            android:name="xposeddescription"
+            android:value="去除云视听小电视弹窗与视频提及游戏下载内容" />
+    </application>
+
+</manifest>
