@@ -3,6 +3,8 @@ package io.zel.bbplus
 import android.content.Context
 import io.github.libxposed.api.XposedInterface
 import io.zel.bbplus.hook.DmActivityMetaHook
+import io.zel.bbplus.hook.LiveRoomEntranceHook
+import io.zel.bbplus.hook.LiveRoomPopupHook
 import io.zel.bbplus.hook.PlayerWatermarkHook
 import io.zel.bbplus.hook.ShareToOverflowHook
 import io.zel.bbplus.hook.VideoMentionGameHook
@@ -43,6 +45,8 @@ class BbplusRuntime internal constructor(
             VideoMentionGameHook(runtime).startHook()
             PlayerWatermarkHook(runtime).startHook()
             ShareToOverflowHook(runtime).startHook()
+            LiveRoomPopupHook(runtime).startHook()
+            LiveRoomEntranceHook(runtime).startHook()
             runtime.log("BBplus runtime hooks installed")
         }
     }
