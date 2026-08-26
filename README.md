@@ -20,9 +20,13 @@
 |------|------|
 | 去除「云视听小电视」贴片 | 弹幕接口返回的 `activityMeta` 活动数据整体清空 |
 | 去除「视频提及」游戏下载内容 | 提及列表/卡片/区域标题中的游戏推广过滤 |
+| 去除播放器水印 | 移除播放画面上的 bilibili 与 UP 主名半透明水印 |
 | 分享按钮改为更多操作 | 详情页点分享（含图标）直接弹出「更多」面板 |
+| 净化直播间浮窗 | Hook FastJSON 反序列化，按需隐藏直播间浮窗，支持 8 个子选项：购物卡片 / 购物精选 / 关注提醒 / 直播预约 / 投喂支持 / 滚动横幅 / 电池任务 / 正在去买 |
+| 隐藏人气票按钮 | 隐藏直播间底部输入栏旁的「人气」快速送礼圆钮，布局自动补位 |
+| 隐藏PK赏金周赛贴片 | 隐藏顶栏右侧活动贴片区（PK赏金周赛、礼物星球等活动卡） |
 
-设置入口：`我的 → 设置 → 关于哔哩哔哩 → BBplus 设置`（hook `HelpFragment.onActivityCreated` 注入）。
+设置入口：`我的 → 设置 → 关于哔哩哔哩 → BBplus 设置`（hook `HelpFragment.onActivityCreated` 注入）。设置面板为卡片式布局，支持深色模式；直播间净化项点击弹出多选列表，开关即时生效。
 
 ## 构建
 
@@ -37,6 +41,7 @@
 - [libxposed](https://github.com/LSPosed/libxposed)：Xposed 接口 API 102
 - [NPatch](https://github.com/7723mod/NPatch)：无 root 环境下的模块载体与作用域管理
 - [BBZQ](https://github.com/HSSkyBoy/BBZQ)：同类 B 站增强模组，Hook 与设置注入架构参考
+- [BiliRoaming](https://github.com/iAcn/BiliRoaming)：哔哩哔哩增强模组，「净化直播间浮窗」的 FastJSON Hook 思路与目标类来源
 
 ## 许可
 
