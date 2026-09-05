@@ -74,7 +74,6 @@ object SettingsPanel {
         val pref = prefType.getConstructor(Context::class.java).newInstance(activity)
         prefType.getMethod("setKey", String::class.java).invoke(pref, ENTRY_KEY)
         prefType.getMethod("setTitle", CharSequence::class.java).invoke(pref, ENTRY_TITLE)
-        prefType.getMethod("setSummary", CharSequence::class.java).invoke(pref, ENTRY_SUMMARY)
         prefType.getMethod("setPersistent", Boolean::class.javaPrimitiveType).invoke(pref, false)
 
         val clickSetter = prefType.methods.first {
@@ -254,7 +253,7 @@ object SettingsPanel {
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
         }
         textCol.addView(TextView(activity).apply {
-            text = "净化直播间浮窗"
+            text = "净化直播间"
             textSize = 15f
             setTextColor(p.primary)
         })
@@ -274,7 +273,7 @@ object SettingsPanel {
 
     private fun purifySummaryText(prefs: SharedPreferences): String {
         val selected = BbplusSettings.getPurifyLivePopups(prefs)
-        if (selected.isEmpty()) return "未启用 · 点击选择要隐藏的浮窗"
+        if (selected.isEmpty()) return "未启用 · 点击选择要隐藏的内容"
         val names = BbplusSettings.purifyLabels.filter { it.first in selected }.map { it.second }
         return "已选 ${names.size}/${BbplusSettings.purifyLabels.size} 项 · ${names.joinToString("、")}"
     }
@@ -305,10 +304,9 @@ object SettingsPanel {
 
         val generalCard = card(activity, p)
         val rows = listOf(
-            Triple(BbplusSettings.KEY_BLOCK_CLOUD_TV_POPUP, "去除云视听小电视弹窗", "开播瞬间左上角的「云视听小电视」推广小窗"),
-            Triple(BbplusSettings.KEY_BLOCK_MENTION_GAME, "去除视频提及游戏卡片", "视频详情页「提及」列表中的游戏下载推广"),
-            Triple(BbplusSettings.KEY_BLOCK_PLAYER_WATERMARK, "去除播放器水印", "播放画面上的 bilibili 与 UP 主名半透明水印"),
-            Triple(BbplusSettings.KEY_SHARE_TO_OVERFLOW, "分享按钮改为更多操作", "详情页点「分享」直接打开「更多」操作面板"),
+            Triple(BbplusSettings.KEY_BLOCK_CLOUD_TV_POPUP, "去除云视听小电视贴片", "播放器云视听小电视贴片"),
+            Triple(BbplusSettings.KEY_BLOCK_MENTION_GAME, "去除视频提及游戏卡片", "详情页游戏推广卡片"),
+            Triple(BbplusSettings.KEY_SHARE_TO_OVERFLOW, "分享按钮重定向", "分享按钮打开更多操作"),
         )
         rows.forEachIndexed { i, (key, title, summary) ->
             generalCard.addView(switchRow(activity, prefs, p, key, title, summary))
@@ -319,14 +317,6 @@ object SettingsPanel {
         root.addView(sectionHeader(activity, p, "直播间"))
 
         val liveCard = card(activity, p)
-        val liveRows = listOf(
-            Triple(BbplusSettings.KEY_HIDE_POPULARITY_TICKET, "隐藏人气票按钮", "底部输入栏旁的「人气」快速送礼圆钮"),
-            Triple(BbplusSettings.KEY_HIDE_PK_TASK_WIDGET, "隐藏PK赏金周赛贴片", "顶栏右侧活动贴片区（含礼物星球等活动卡）"),
-        )
-        liveRows.forEach { (key, title, summary) ->
-            liveCard.addView(switchRow(activity, prefs, p, key, title, summary))
-            liveCard.addView(divider(activity, p))
-        }
         val purifySummary = TextView(activity)
         purifySummary.text = purifySummaryText(prefs)
         liveCard.addView(
@@ -375,14 +365,14 @@ object SettingsPanel {
         }
 
         root.addView(TextView(activity).apply {
-            text = "净化直播间浮窗"
+            text = "净化直播间"
             textSize = 18f
             setTypeface(typeface, Typeface.BOLD)
             setTextColor(p.primary)
             setPadding(dp(activity, 2f), 0, 0, 0)
         })
         root.addView(TextView(activity).apply {
-            text = "勾选要在直播间隐藏的浮窗类型，留空则不启用。"
+            text = "勾选要在直播间隐藏的内容，留空则不启用。"
             textSize = 12f
             setTextColor(p.secondary)
             setPadding(dp(activity, 2f), dp(activity, 4f), 0, dp(activity, 8f))
@@ -407,6 +397,10 @@ object SettingsPanel {
                 BbplusSettings.PURIFY_BANNER -> "顶部滚动公告横幅"
                 BbplusSettings.PURIFY_TASK -> "电池任务与活动浮窗"
                 BbplusSettings.PURIFY_GOTO_BUY -> "「正在去买」跳转提示"
+                BbplusSettings.PURIFY_POPULARITY_TICKET -> "直播间人气票入口"
+                BbplusSettings.PURIFY_SHOPPING_CART_BTN -> "直播间购物车按钮"
+                BbplusSettings.PURIFY_PLAY_WITH_ME -> "直播间帮我玩按钮"
+                BbplusSettings.PURIFY_PK_WIDGET -> "直播间PK贴片"
                 else -> ""
             }
             val itemRow = LinearLayout(activity).apply {
@@ -491,6 +485,4 @@ object SettingsPanel {
 
     private const val ENTRY_KEY = "bbplus_settings_entry"
     private const val ENTRY_TITLE = "BBplus 设置"
-    private const val ENTRY_SUMMARY =
-        "弹窗净化 / 视频提及游戏 / 播放器水印 / 分享重定向 / 直播间浮窗净化"
 }

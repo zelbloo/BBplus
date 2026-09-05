@@ -115,7 +115,7 @@ class LiveRoomPopupHook(private val runtime: BbplusRuntime) {
         } else if (cls === liveShoppingGotoBuyInfo) {
             blocked = BbplusSettings.PURIFY_GOTO_BUY in enabled
         } else if (cls === pkTaskWidgetData) {
-            if (BbplusSettings.isHidePkTaskWidget(runtime.prefs)) {
+            if (BbplusSettings.PURIFY_PK_WIDGET in enabled) {
                 setBooleanField(scope, "show", false)
                 setReferenceField(scope, "task", null)
                 if (pkTaskLogged.compareAndSet(false, true)) {

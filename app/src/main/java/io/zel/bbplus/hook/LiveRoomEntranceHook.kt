@@ -15,11 +15,14 @@ class LiveRoomEntranceHook(private val runtime: BbplusRuntime) {
     private val fastGiftSlotLogged = AtomicBoolean(false)
     private val pkPendantLogged = AtomicBoolean(false)
     private val diagNullLogged = AtomicBoolean(false)
+    private val shoppingCartLogged = AtomicBoolean(false)
+    private val playWithMeLogged = AtomicBoolean(false)
 
     fun startHook() {
         hookFastGiftEntrance()
         hideTopOperationPendants()
         installLynxDiagnostics()
+        hookOuterPanelFilter()
     }
 
     private fun hookFastGiftEntrance() {
@@ -41,7 +44,8 @@ class LiveRoomEntranceHook(private val runtime: BbplusRuntime) {
                     if (thiz == null || !entranceType.isInstance(thiz)) {
                         return@intercept chain.proceed()
                     }
-                    if (!BbplusSettings.isHidePopularityTicket(runtime.prefs)) {
+                    val purifySet = BbplusSettings.getPurifyLivePopups(runtime.prefs)
+                    if (BbplusSettings.PURIFY_POPULARITY_TICKET !in purifySet) {
                         return@intercept chain.proceed()
                     }
                     if (fastGiftGoneLogged.compareAndSet(false, true)) {
@@ -69,7 +73,8 @@ class LiveRoomEntranceHook(private val runtime: BbplusRuntime) {
                 val result = chain.proceed()
                 runCatching {
                     val thiz = chain.thisObject
-                    if (thiz is View && BbplusSettings.isHidePopularityTicket(runtime.prefs)) {
+                    val purifySet = BbplusSettings.getPurifyLivePopups(runtime.prefs)
+                    if (thiz is View && BbplusSettings.PURIFY_POPULARITY_TICKET in purifySet) {
                         thiz.visibility = View.GONE
                         hideParentSlot(thiz)
                     }
@@ -80,13 +85,17 @@ class LiveRoomEntranceHook(private val runtime: BbplusRuntime) {
     }
 
     private fun hideParentSlot(view: View) {
-        val parent = view.parent as? View ?: return
-        val slotId = resolveId(parent, "fr_speedy_send_gift", FR_SPEEDY_SEND_GIFT_ID)
-        if (parent.id == slotId && parent.visibility != View.GONE) {
-            parent.visibility = View.GONE
-            if (fastGiftSlotLogged.compareAndSet(false, true)) {
-                runtime.log("[PopularityTicket] parent slot fr_speedy_send_gift hidden")
+        var current: View? = view.parent as? View
+        while (current != null && current is android.widget.FrameLayout) {
+            if (current.visibility != View.GONE) {
+                current.visibility = View.GONE
+                if (fastGiftSlotLogged.compareAndSet(false, true)) {
+                    runtime.log("[PopularityTicket] FrameLayout hidden: id=0x${Integer.toHexString(current.id)}")
+                }
             }
+            val slotId = resolveId(current, "fr_speedy_send_gift", FR_SPEEDY_SEND_GIFT_ID)
+            if (current.id == slotId) break
+            current = current.parent as? View
         }
     }
 
@@ -109,7 +118,7 @@ class LiveRoomEntranceHook(private val runtime: BbplusRuntime) {
                 runCatching {
                     val thiz = chain.thisObject as? View ?: return@runCatching
                     if (!lynxViewType.isInstance(thiz)) return@runCatching
-                    if (!BbplusSettings.isHidePkTaskWidget(runtime.prefs)) return@runCatching
+                    if (!BbplusSettings.getPurifyLivePopups(runtime.prefs).contains(BbplusSettings.PURIFY_PK_WIDGET)) return@runCatching
                     val containerId = resolveId(thiz, "top_operation_right_lynx_container", TOP_OPERATION_RIGHT_LYNX_CONTAINER_ID)
                     var parent = thiz.parent
                     while (parent is View) {
@@ -158,7 +167,7 @@ class LiveRoomEntranceHook(private val runtime: BbplusRuntime) {
         runtime.xposed.hook(fetchMethod)
             .setExceptionMode(XposedInterface.ExceptionMode.PASSTHROUGH)
             .intercept { chain ->
-                if (BbplusSettings.isHidePkTaskWidget(runtime.prefs)) {
+                if (BbplusSettings.getPurifyLivePopups(runtime.prefs).contains(BbplusSettings.PURIFY_PK_WIDGET)) {
                     runCatching {
                         val request = chain.args.getOrNull(0)
                         val url = urlField?.get(request) as? String
@@ -174,6 +183,73 @@ class LiveRoomEntranceHook(private val runtime: BbplusRuntime) {
         runtime.log("LiveRoomEntranceHook diagnostics installed on ${providerType.name}.${fetchMethod.name}")
     }
 
+    private fun hookOuterPanelFilter() {
+        val outerPanelType = loadClass(CLASS_OUTER_PANEL_VIEW) ?: run {
+            runtime.log("LiveRoomEntranceHook skipped: LiveOuterPanelViewV2 not found")
+            return
+        }
+
+        val setItemsMethod = runCatching {
+            outerPanelType.declaredMethods.firstOrNull { method ->
+                method.name == "d" &&
+                    method.parameterCount == 1 &&
+                    method.parameterTypes[0] == java.util.List::class.java
+            }?.apply { isAccessible = true }
+        }.getOrNull() ?: run {
+            runtime.log("LiveRoomEntranceHook skipped: LiveOuterPanelViewV2.d(List) not found")
+            return
+        }
+
+        runtime.xposed.hook(setItemsMethod)
+            .setExceptionMode(XposedInterface.ExceptionMode.PASSTHROUGH)
+            .intercept { chain ->
+                val purifySet = BbplusSettings.getPurifyLivePopups(runtime.prefs)
+                val hideShoppingCart = BbplusSettings.PURIFY_SHOPPING_CART_BTN in purifySet
+                val hidePlayWithMe = BbplusSettings.PURIFY_PLAY_WITH_ME in purifySet
+
+                if (!hideShoppingCart && !hidePlayWithMe) {
+                    return@intercept chain.proceed()
+                }
+
+                val originalList = chain.args.getOrNull(0) as? List<*> ?: return@intercept chain.proceed()
+
+                val filteredList = originalList.filter { item ->
+                    if (item == null) return@filter true
+
+                    val settingData = runCatching {
+                        item.javaClass.getField("a").get(item)
+                    }.getOrNull() ?: return@filter true
+
+                    val bizId = runCatching {
+                        settingData.javaClass.getField("bizId").getInt(settingData)
+                    }.getOrNull() ?: return@filter true
+
+                    if (hideShoppingCart && bizId == BIZ_ID_SHOPPING_CART) {
+                        if (shoppingCartLogged.compareAndSet(false, true)) {
+                            runtime.log("[ShoppingCart] filtered bizId=$bizId from outer panel")
+                        }
+                        return@filter false
+                    }
+
+                    if (hidePlayWithMe && bizId == BIZ_ID_PLAY_WITH_ME) {
+                        if (playWithMeLogged.compareAndSet(false, true)) {
+                            runtime.log("[PlayWithMe] filtered bizId=$bizId from outer panel")
+                        }
+                        return@filter false
+                    }
+
+                    true
+                }
+
+                if (filteredList.size == originalList.size) {
+                    return@intercept chain.proceed()
+                }
+
+                chain.proceed(arrayOf(filteredList))
+            }
+        runtime.log("LiveRoomEntranceHook installed on ${outerPanelType.name}.d(List)")
+    }
+
     private fun loadClass(name: String): Class<*>? =
         runCatching { runtime.classLoader.loadClass(name) }.getOrNull()
 
@@ -183,7 +259,11 @@ class LiveRoomEntranceHook(private val runtime: BbplusRuntime) {
         const val CLASS_LYNX_VIEW = "com.lynx.tasm.LynxView"
         const val CLASS_LYNX_TEMPLATE_PROVIDER =
             "com.bilibili.lib.lynx.BiliLynxTemplateProvider"
+        const val CLASS_OUTER_PANEL_VIEW =
+            "com.bilibili.bililive.room.ui.roomv3.settinginteractionpanel.widget.LiveOuterPanelViewV2"
         const val TOP_OPERATION_RIGHT_LYNX_CONTAINER_ID = 0x7f0961f6
         const val FR_SPEEDY_SEND_GIFT_ID = 0x7f095443
+        const val BIZ_ID_SHOPPING_CART = 33
+        const val BIZ_ID_PLAY_WITH_ME = 1013
     }
 }
