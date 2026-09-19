@@ -9,6 +9,7 @@ object BbplusSettings {
     const val KEY_BLOCK_MENTION_GAME = "block_mention_game"
     const val KEY_BLOCK_PLAYER_WATERMARK = "block_player_watermark"
     const val KEY_SHARE_TO_OVERFLOW = "share_to_overflow"
+    const val KEY_LIVE_SENSOR_ROTATION = "live_sensor_rotation"
     const val KEY_PURIFY_LIVE_POPUPS = "purify_live_popups"
 
     const val PURIFY_SHOPPING_CARD = "shoppingCard"
@@ -50,6 +51,9 @@ object BbplusSettings {
 
     fun isShareToOverflow(prefs: SharedPreferences): Boolean =
         prefs.getBoolean(KEY_SHARE_TO_OVERFLOW, true)
+
+    fun isLiveSensorRotation(prefs: SharedPreferences): Boolean =
+        prefs.getBoolean(KEY_LIVE_SENSOR_ROTATION, true)
 
     fun getPurifyLivePopups(prefs: SharedPreferences): Set<String> =
         prefs.getStringSet(KEY_PURIFY_LIVE_POPUPS, emptySet()) ?: emptySet()

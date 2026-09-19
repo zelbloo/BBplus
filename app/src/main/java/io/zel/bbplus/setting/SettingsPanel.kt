@@ -317,6 +317,17 @@ object SettingsPanel {
         root.addView(sectionHeader(activity, p, "直播间"))
 
         val liveCard = card(activity, p)
+        liveCard.addView(
+            switchRow(
+                activity,
+                prefs,
+                p,
+                BbplusSettings.KEY_LIVE_SENSOR_ROTATION,
+                "直播间重力感应旋屏",
+                "全屏时根据重力自动旋转横屏方向",
+            ),
+        )
+        liveCard.addView(divider(activity, p))
         val purifySummary = TextView(activity)
         purifySummary.text = purifySummaryText(prefs)
         liveCard.addView(
@@ -329,7 +340,7 @@ object SettingsPanel {
         root.addView(liveCard)
 
         root.addView(TextView(activity).apply {
-            text = "开关即时生效；直播间净化需重新进入直播间后生效。"
+            text = "开关即时生效；直播间净化需重新进入直播间后生效；旋屏开关在下次全屏时生效。"
             textSize = 11f
             setTextColor(p.secondary)
             setPadding(dp(activity, 4f), dp(activity, 18f), 0, 0)
