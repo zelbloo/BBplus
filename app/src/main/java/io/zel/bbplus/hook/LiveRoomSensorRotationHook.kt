@@ -17,6 +17,7 @@ class LiveRoomSensorRotationHook(private val runtime: BbplusRuntime) {
     private var sensorListener: OrientationEventListener? = null
     private var currentActivity: WeakReference<Activity>? = null
     private val logged = AtomicBoolean(false)
+    private var isLandscapeMode = false
 
     fun startHook() {
         val setOrientationMethod = runCatching {
@@ -46,6 +47,7 @@ class LiveRoomSensorRotationHook(private val runtime: BbplusRuntime) {
 
                 when (requested) {
                     ORIENTATION_LANDSCAPE -> {
+                        isLandscapeMode = true
                         ensureSensorStarted(thiz)
                         val target = sensorOrientation
                         if (target != ORIENTATION_UNKNOWN && target != ORIENTATION_LANDSCAPE) {
@@ -57,6 +59,7 @@ class LiveRoomSensorRotationHook(private val runtime: BbplusRuntime) {
                         chain.proceed()
                     }
                     ORIENTATION_PORTRAIT, ORIENTATION_REVERSE_PORTRAIT -> {
+                        isLandscapeMode = false
                         stopSensorListener()
                         chain.proceed()
                     }
@@ -82,11 +85,14 @@ class LiveRoomSensorRotationHook(private val runtime: BbplusRuntime) {
             override fun onOrientationChanged(orientation: Int) {
                 if (orientation == ORIENTATION_UNKNOWN) return
                 val target = when (orientation) {
-                    in 80..101 -> ORIENTATION_REVERSE_LANDSCAPE
-                    in 260..281 -> ORIENTATION_LANDSCAPE
+                    in 75..105 -> ORIENTATION_REVERSE_LANDSCAPE
+                    in 255..285 -> ORIENTATION_LANDSCAPE
                     else -> return
                 }
                 sensorOrientation = target
+                if (isLandscapeMode && target != ORIENTATION_UNKNOWN) {
+                    applyOrientation(target)
+                }
             }
         }
 
@@ -96,6 +102,17 @@ class LiveRoomSensorRotationHook(private val runtime: BbplusRuntime) {
             runtime.log("[SensorRotation] sensor listener started")
         } else {
             runtime.log("[SensorRotation] device cannot detect orientation")
+        }
+    }
+
+    private fun applyOrientation(target: Int) {
+        val activity = currentActivity?.get() ?: return
+        val currentOrientation = activity.requestedOrientation
+        if (currentOrientation != target) {
+            if (logged.compareAndSet(false, true)) {
+                runtime.log("[SensorRotation] apply orientation: $currentOrientation -> $target")
+            }
+            activity.requestedOrientation = target
         }
     }
 
