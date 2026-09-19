@@ -1,9 +1,7 @@
 package io.zel.bbplus.hook
 
 import android.app.Activity
-import android.content.ContentResolver
 import android.hardware.SensorManager
-import android.provider.Settings
 import android.view.OrientationEventListener
 import io.github.libxposed.api.XposedInterface
 import io.zel.bbplus.BbplusRuntime
@@ -54,11 +52,9 @@ class LiveRoomSensorRotationHook(private val runtime: BbplusRuntime) {
 
                 when (requestedOrientation) {
                     ORIENTATION_LANDSCAPE -> {
-                        if (isSystemAutoRotateOn(thiz.contentResolver)) {
-                            startSensorListener(thiz)
-                            if (logged.compareAndSet(false, true)) {
-                                runtime.log("[SensorRotation] sensor rotation enabled for live room")
-                            }
+                        startSensorListener(thiz)
+                        if (logged.compareAndSet(false, true)) {
+                            runtime.log("[SensorRotation] sensor rotation enabled for live room")
                         }
                         chain.proceed()
                     }
@@ -91,7 +87,6 @@ class LiveRoomSensorRotationHook(private val runtime: BbplusRuntime) {
                     stopSensorListener()
                     return
                 }
-                if (!isSystemAutoRotateOn(act.contentResolver)) return
 
                 val target = when (orientation) {
                     in 80..101 -> ORIENTATION_REVERSE_LANDSCAPE
@@ -120,11 +115,6 @@ class LiveRoomSensorRotationHook(private val runtime: BbplusRuntime) {
         sensorListener = null
         targetActivity = null
     }
-
-    private fun isSystemAutoRotateOn(resolver: ContentResolver): Boolean =
-        runCatching {
-            Settings.System.getInt(resolver, Settings.System.ACCELEROMETER_ROTATION) != 0
-        }.getOrDefault(false)
 
     private fun loadClass(name: String): Class<*>? =
         runCatching { runtime.classLoader.loadClass(name) }.getOrNull()
