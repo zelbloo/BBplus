@@ -7,6 +7,7 @@ object BbplusSettings {
 
     const val KEY_BLOCK_CLOUD_TV_POPUP = "block_cloud_tv_popup"
     const val KEY_BLOCK_MENTION_GAME = "block_mention_game"
+    const val KEY_BLOCK_DYNAMIC_GAME_CARD = "block_dynamic_game_card"
     const val KEY_BLOCK_PLAYER_WATERMARK = "block_player_watermark"
     const val KEY_SHARE_TO_OVERFLOW = "share_to_overflow"
     const val KEY_LIVE_SENSOR_ROTATION = "live_sensor_rotation"
@@ -45,6 +46,9 @@ object BbplusSettings {
 
     fun isBlockMentionGame(prefs: SharedPreferences): Boolean =
         prefs.getBoolean(KEY_BLOCK_MENTION_GAME, true)
+
+    fun isBlockDynamicGameCard(prefs: SharedPreferences): Boolean =
+        prefs.getBoolean(KEY_BLOCK_DYNAMIC_GAME_CARD, true)
 
     fun isBlockPlayerWatermark(prefs: SharedPreferences): Boolean =
         prefs.getBoolean(KEY_BLOCK_PLAYER_WATERMARK, false)

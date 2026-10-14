@@ -306,6 +306,7 @@ object SettingsPanel {
         val rows = listOf(
             Triple(BbplusSettings.KEY_BLOCK_CLOUD_TV_POPUP, "去除云视听小电视贴片", "播放器云视听小电视贴片"),
             Triple(BbplusSettings.KEY_BLOCK_MENTION_GAME, "去除视频提及游戏卡片", "详情页游戏推广卡片"),
+            Triple(BbplusSettings.KEY_BLOCK_DYNAMIC_GAME_CARD, "去除动态相关游戏卡片", "动态/图文动态下方附加游戏卡片"),
             Triple(BbplusSettings.KEY_SHARE_TO_OVERFLOW, "分享按钮重定向", "分享按钮打开更多操作"),
         )
         rows.forEachIndexed { i, (key, title, summary) ->
