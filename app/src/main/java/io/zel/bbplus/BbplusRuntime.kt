@@ -3,6 +3,8 @@ package io.zel.bbplus
 import android.content.Context
 import io.github.libxposed.api.XposedInterface
 import io.zel.bbplus.hook.DmActivityMetaHook
+import io.zel.bbplus.hook.HomeFeedFilterHook
+import io.zel.bbplus.hook.HomeFeedSizeHook
 import io.zel.bbplus.hook.LiveRoomEntranceHook
 import io.zel.bbplus.hook.LiveRoomPopupHook
 import io.zel.bbplus.hook.LiveRoomSensorRotationHook
@@ -49,6 +51,8 @@ class BbplusRuntime internal constructor(
             LiveRoomPopupHook(runtime).startHook()
             LiveRoomSensorRotationHook(runtime).startHook()
             LiveRoomEntranceHook(runtime).startHook()
+            HomeFeedSizeHook(runtime).startHook()
+            HomeFeedFilterHook(runtime).startHook()
             runtime.log("BBplus runtime hooks installed")
         }
     }

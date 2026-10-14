@@ -57,4 +57,95 @@ object BbplusSettings {
 
     fun getPurifyLivePopups(prefs: SharedPreferences): Set<String> =
         prefs.getStringSet(KEY_PURIFY_LIVE_POPUPS, emptySet()) ?: emptySet()
+
+    // ==================== Home Feed Filter ====================
+
+    const val KEY_FEED_FILTER_ENABLED = "feed_filter_enabled"
+    const val KEY_FEED_FILTER_MODE = "feed_filter_mode" // "blacklist" or "whitelist"
+    const val KEY_FEED_BYPASS_FOLLOWED = "feed_bypass_followed"
+
+    const val KEY_FEED_FILTER_AD = "feed_filter_ad"
+    const val KEY_FEED_FILTER_LIVE = "feed_filter_live"
+    const val KEY_FEED_FILTER_PICTURE = "feed_filter_picture"
+    const val KEY_FEED_FILTER_BANNER = "feed_filter_banner"
+
+    const val KEY_FEED_LIKE_MIN = "feed_like_min"
+    const val KEY_FEED_LIKE_MAX = "feed_like_max"
+    const val KEY_FEED_DURATION_MIN = "feed_duration_min"
+    const val KEY_FEED_DURATION_MAX = "feed_duration_max"
+
+    const val KEY_FEED_KEYWORD_TITLE = "feed_keyword_title"
+    const val KEY_FEED_KEYWORD_UP = "feed_keyword_up"
+    const val KEY_FEED_KEYWORD_CATEGORY = "feed_keyword_category"
+    const val KEY_FEED_KEYWORD_REASON = "feed_keyword_reason"
+    const val KEY_FEED_KEYWORD_REGEX = "feed_keyword_regex"
+
+    // ==================== Home Feed Size ====================
+
+    const val KEY_FEED_SIZE_ENHANCE = "feed_size_enhance"
+    const val KEY_FEED_MAX_CARD_COUNT = "feed_max_card_count"
+    const val KEY_FEED_AUTO_LOAD_MORE = "feed_auto_load_more"
+    const val KEY_FEED_TARGET_COUNT = "feed_target_count"
+
+    // ==================== Accessors ====================
+
+    fun isFeedFilterEnabled(prefs: SharedPreferences): Boolean =
+        prefs.getBoolean(KEY_FEED_FILTER_ENABLED, false)
+
+    fun getFeedFilterMode(prefs: SharedPreferences): String =
+        prefs.getString(KEY_FEED_FILTER_MODE, "blacklist") ?: "blacklist"
+
+    fun isFeedBypassFollowed(prefs: SharedPreferences): Boolean =
+        prefs.getBoolean(KEY_FEED_BYPASS_FOLLOWED, true)
+
+    fun isFeedFilterAd(prefs: SharedPreferences): Boolean =
+        prefs.getBoolean(KEY_FEED_FILTER_AD, true)
+
+    fun isFeedFilterLive(prefs: SharedPreferences): Boolean =
+        prefs.getBoolean(KEY_FEED_FILTER_LIVE, false)
+
+    fun isFeedFilterPicture(prefs: SharedPreferences): Boolean =
+        prefs.getBoolean(KEY_FEED_FILTER_PICTURE, false)
+
+    fun isFeedFilterBanner(prefs: SharedPreferences): Boolean =
+        prefs.getBoolean(KEY_FEED_FILTER_BANNER, false)
+
+    fun getFeedLikeMin(prefs: SharedPreferences): Long =
+        prefs.getLong(KEY_FEED_LIKE_MIN, 0L)
+
+    fun getFeedLikeMax(prefs: SharedPreferences): Long =
+        prefs.getLong(KEY_FEED_LIKE_MAX, 0L)
+
+    fun getFeedDurationMin(prefs: SharedPreferences): Int =
+        prefs.getInt(KEY_FEED_DURATION_MIN, 0)
+
+    fun getFeedDurationMax(prefs: SharedPreferences): Int =
+        prefs.getInt(KEY_FEED_DURATION_MAX, 0)
+
+    fun getFeedKeywordTitle(prefs: SharedPreferences): Set<String> =
+        prefs.getStringSet(KEY_FEED_KEYWORD_TITLE, emptySet()) ?: emptySet()
+
+    fun getFeedKeywordUp(prefs: SharedPreferences): Set<String> =
+        prefs.getStringSet(KEY_FEED_KEYWORD_UP, emptySet()) ?: emptySet()
+
+    fun getFeedKeywordCategory(prefs: SharedPreferences): Set<String> =
+        prefs.getStringSet(KEY_FEED_KEYWORD_CATEGORY, emptySet()) ?: emptySet()
+
+    fun getFeedKeywordReason(prefs: SharedPreferences): Set<String> =
+        prefs.getStringSet(KEY_FEED_KEYWORD_REASON, emptySet()) ?: emptySet()
+
+    fun isFeedKeywordRegex(prefs: SharedPreferences): Boolean =
+        prefs.getBoolean(KEY_FEED_KEYWORD_REGEX, false)
+
+    fun isFeedSizeEnhance(prefs: SharedPreferences): Boolean =
+        prefs.getBoolean(KEY_FEED_SIZE_ENHANCE, true)
+
+    fun getFeedMaxCardCount(prefs: SharedPreferences): Int =
+        prefs.getInt(KEY_FEED_MAX_CARD_COUNT, 1000)
+
+    fun isFeedAutoLoadMore(prefs: SharedPreferences): Boolean =
+        prefs.getBoolean(KEY_FEED_AUTO_LOAD_MORE, true)
+
+    fun getFeedTargetCount(prefs: SharedPreferences): Int =
+        prefs.getInt(KEY_FEED_TARGET_COUNT, 30)
 }
