@@ -11,6 +11,7 @@ import io.zel.bbplus.hook.LiveRoomPopupHook
 import io.zel.bbplus.hook.LiveRoomSensorRotationHook
 import io.zel.bbplus.hook.PlayerWatermarkHook
 import io.zel.bbplus.hook.ShareToOverflowHook
+import io.zel.bbplus.hook.SpaceH5GameCardHook
 import io.zel.bbplus.hook.VideoMentionGameHook
 import io.zel.bbplus.setting.SettingsPanel
 
@@ -55,6 +56,7 @@ class BbplusRuntime internal constructor(
             HomeFeedSizeHook(runtime).startHook()
             HomeFeedFilterHook(runtime).startHook()
             DynamicGameCardHook(runtime).startHook()
+            SpaceH5GameCardHook(runtime).startHook()
             runtime.log("BBplus runtime hooks installed")
         }
     }
