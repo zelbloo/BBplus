@@ -182,6 +182,29 @@ object SettingsPanel {
             setBackgroundColor(p.divider)
         }
 
+    /**
+     * 把条目区放进限高的滚动容器：条目较多时在列表内部滚动，
+     * 避免条目把底部按钮行挤扁，导致按钮显示不全、文字被切断。
+     */
+    private fun scrollableSection(activity: Activity, content: View): ScrollView {
+        val maxSectionHeight = (activity.resources.displayMetrics.heightPixels - dp(activity, 280f))
+            .coerceAtLeast(dp(activity, 120f))
+        return object : ScrollView(activity) {
+            override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+                super.onMeasure(
+                    widthMeasureSpec,
+                    View.MeasureSpec.makeMeasureSpec(maxSectionHeight, View.MeasureSpec.AT_MOST),
+                )
+            }
+        }.apply {
+            isVerticalScrollBarEnabled = false
+            addView(
+                content,
+                ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT),
+            )
+        }
+    }
+
     private fun tintSwitch(activity: Activity, p: Palette, switch: Switch) {
         runCatching {
             switch.thumbTintList = ColorStateList.valueOf(0xFFFFFFFF.toInt())
@@ -555,9 +578,10 @@ object SettingsPanel {
             "whitelist" to "白名单（仅展示匹配项）" to "默认隐藏所有，仅展示符合条件的视频")
 
         var selected = currentMode
+        val list = LinearLayout(activity).apply { orientation = LinearLayout.VERTICAL }
         modes.forEachIndexed { i, (pair, desc) ->
             val (value, label) = pair
-            if (i > 0) root.addView(divider(activity, p))
+            if (i > 0) list.addView(divider(activity, p))
             val itemRow = LinearLayout(activity).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
@@ -593,8 +617,9 @@ object SettingsPanel {
                 setPadding(0, dp(activity, 2f), 0, 0)
             })
             itemRow.addView(textCol)
-            root.addView(itemRow)
+            list.addView(itemRow)
         }
+        root.addView(scrollableSection(activity, list))
 
         dialog.setContentView(root)
         dialog.show()
@@ -674,7 +699,7 @@ object SettingsPanel {
             itemRow.addView(textCol)
             list.addView(itemRow)
         }
-        root.addView(list)
+        root.addView(scrollableSection(activity, list))
 
         val buttonRow = LinearLayout(activity).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -744,16 +769,17 @@ object SettingsPanel {
         )
 
         val editTexts = mutableMapOf<String, android.widget.EditText>()
+        val fieldsList = LinearLayout(activity).apply { orientation = LinearLayout.VERTICAL }
         fields.forEachIndexed { i, (key, pair, default) ->
             val (fieldLabel, fieldHint) = pair
-            if (i > 0) root.addView(divider(activity, p))
+            if (i > 0) fieldsList.addView(divider(activity, p))
             val labelView = TextView(activity).apply {
                 text = fieldLabel
                 textSize = 14f
                 setTextColor(p.primary)
                 setPadding(dp(activity, 4f), dp(activity, 10f), 0, dp(activity, 4f))
             }
-            root.addView(labelView)
+            fieldsList.addView(labelView)
             val current = when (key) {
                 BbplusSettings.KEY_FEED_LIKE_MIN -> prefs.getLong(key, 0L).toString()
                 BbplusSettings.KEY_FEED_LIKE_MAX -> prefs.getLong(key, 0L).toString()
@@ -772,8 +798,9 @@ object SettingsPanel {
                 background = rounded(p.buttonBg, 12f)
             }
             editTexts[key] = et
-            root.addView(et)
+            fieldsList.addView(et)
         }
+        root.addView(scrollableSection(activity, fieldsList))
 
         val buttonRow = LinearLayout(activity).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -858,15 +885,16 @@ object SettingsPanel {
             Triple(BbplusSettings.KEY_FEED_KEYWORD_REASON, "推荐理由", "过滤指定推荐理由的视频"),
         )
 
+        val content = LinearLayout(activity).apply { orientation = LinearLayout.VERTICAL }
         keywordGroups.forEachIndexed { i, (key, label, desc) ->
-            if (i > 0) root.addView(divider(activity, p))
+            if (i > 0) content.addView(divider(activity, p))
             val count = prefs.getStringSet(key, null)?.size ?: 0
             val summaryView = TextView(activity).apply {
                 text = if (count > 0) "已添加 $count 条" else "未添加"
                 textSize = 12f
                 setTextColor(if (count > 0) p.accent else p.secondary)
             }
-            root.addView(settingRow(activity, p, label, summaryView) {
+            content.addView(settingRow(activity, p, label, summaryView) {
                 showKeywordEditor(runtime, activity, p, key, label) {
                     summaryView.text = if (prefs.getStringSet(key, null)?.size ?: 0 > 0)
                         "已添加 ${prefs.getStringSet(key, null)?.size} 条" else "未添加"
@@ -875,8 +903,9 @@ object SettingsPanel {
             })
         }
 
-        root.addView(divider(activity, p))
-        root.addView(switchRow(activity, prefs, p, BbplusSettings.KEY_FEED_KEYWORD_REGEX, "正则模式", "关键词支持正则表达式匹配"))
+        content.addView(divider(activity, p))
+        content.addView(switchRow(activity, prefs, p, BbplusSettings.KEY_FEED_KEYWORD_REGEX, "正则模式", "关键词支持正则表达式匹配"))
+        root.addView(scrollableSection(activity, content))
 
         val buttonRow = LinearLayout(activity).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -979,7 +1008,7 @@ object SettingsPanel {
         }
         inputLayout.addView(addBtn)
 
-        root.addView(listContainer)
+        root.addView(scrollableSection(activity, listContainer))
         refreshKeywordList(listContainer, current, prefs, prefKey, p, activity)
 
         val buttonRow = LinearLayout(activity).apply {
@@ -1232,7 +1261,8 @@ object SettingsPanel {
             itemRow.addView(textCol)
             list.addView(itemRow)
         }
-        root.addView(list)
+
+        root.addView(scrollableSection(activity, list))
 
         val buttonRow = LinearLayout(activity).apply {
             orientation = LinearLayout.HORIZONTAL
