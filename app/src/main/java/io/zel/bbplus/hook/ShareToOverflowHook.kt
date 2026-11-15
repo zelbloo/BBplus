@@ -7,8 +7,10 @@ import io.zel.bbplus.BbplusSettings
 
 class ShareToOverflowHook(private val runtime: BbplusRuntime) {
 
+    // 9.18.0: 分享区 ViewBinding 从 Dy0.h0 迁到 GA0.c0（结构相同：ctor/bind/inflate/getRoot）
     private val bindingType by lazy {
-        runtime.classLoader.loadClass("Dy0.h0")
+        runCatching { runtime.classLoader.loadClass(BINDING_918) }.getOrNull()
+            ?: runtime.classLoader.loadClass(BINDING_970)
     }
 
     private val continuationType by lazy {
@@ -71,7 +73,7 @@ class ShareToOverflowHook(private val runtime: BbplusRuntime) {
             view.resources.getIdentifier("toolbar_action_overflow", "id", "tv.danmaku.bili")
         }.getOrNull()
         if (resolved != null && resolved != 0) return resolved
-        return OVERFLOW_ID_9_7_0
+        return OVERFLOW_ID_9_18_0
     }
 
     private fun shareIconIdOf(view: View): Int {
@@ -79,10 +81,18 @@ class ShareToOverflowHook(private val runtime: BbplusRuntime) {
             view.resources.getIdentifier("share_icon", "id", "tv.danmaku.bili")
         }.getOrNull()
         if (resolved != null && resolved != 0) return resolved
-        return SHARE_ICON_ID_9_7_0
+        return SHARE_ICON_ID_9_18_0
     }
 
     companion object {
+        private const val BINDING_918 = "GA0.c0"
+        private const val BINDING_970 = "Dy0.h0"
+
+        // 9.18.0 public.xml 实际值（getIdentifier 失败时兜底）
+        private const val OVERFLOW_ID_9_18_0 = 0x7f0947db
+        private const val SHARE_ICON_ID_9_18_0 = 0x7f094101
+
+        // 9.7.0 实际值
         private const val OVERFLOW_ID_9_7_0 = 0x7f09472c
         private const val SHARE_ICON_ID_9_7_0 = 0x7f094067
     }

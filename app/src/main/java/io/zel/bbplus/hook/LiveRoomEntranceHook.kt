@@ -17,19 +17,24 @@ class LiveRoomEntranceHook(private val runtime: BbplusRuntime) {
     private val diagNullLogged = AtomicBoolean(false)
     private val shoppingCartLogged = AtomicBoolean(false)
     private val playWithMeLogged = AtomicBoolean(false)
+    private val fansClubGoneLogged = AtomicBoolean(false)
 
     fun startHook() {
         hookFastGiftEntrance()
+        hookFansClubEntrance()
         hideTopOperationPendants()
         installLynxDiagnostics()
         hookOuterPanelFilter()
     }
 
     private fun hookFastGiftEntrance() {
-        val entranceType = loadClass(CLASS_FAST_GIFT_ENTRANCE) ?: run {
-            runtime.log("LiveRoomEntranceHook skipped: SpeedySendGiftLayout not found")
-            return
-        }
+        // 9.18.0: 人气票按钮从 fastgift.bottom.ui.c 迁到 fastgift.bottom.ui.d
+        // （c 在 9.18 变成 Runnable）；d 仍是 LinearLayout 子类且保留 (Context) 构造器。
+        val entranceType = loadClass(CLASS_FAST_GIFT_ENTRANCE_918)
+            ?: loadClass(CLASS_FAST_GIFT_ENTRANCE_970) ?: run {
+                runtime.log("LiveRoomEntranceHook skipped: SpeedySendGiftLayout not found")
+                return
+            }
 
         val setVisibility = runCatching {
             entranceType.getMethod("setVisibility", Int::class.javaPrimitiveType)
@@ -82,6 +87,72 @@ class LiveRoomEntranceHook(private val runtime: BbplusRuntime) {
                 result
             }
         runtime.log("LiveRoomEntranceHook installed on ${entranceType.name}.<init>")
+    }
+
+    private fun hookFansClubEntrance() {
+        // 粉丝团按钮：竖屏由 bili_live_room_business_bottom_view_v2 静态 inflate
+        // （id live_bottom_follow_slot），横屏由 LiveLandscapeBottomFollowWidget.e() new 出来。
+        // 两条路径都经过 LiveBottomFollowButtonView 的构造器，显隐统一走 setVisibility，
+        // 因此与「人气票」同套路：构造器置 GONE + setVisibility 改参（isInstance 守卫）。
+        val followViewType = loadClass(CLASS_FANS_CLUB_ENTRANCE) ?: run {
+            runtime.log("LiveRoomEntranceHook skipped: LiveBottomFollowButtonView not found")
+            return
+        }
+
+        val setVisibility = runCatching {
+            followViewType.getMethod("setVisibility", Int::class.javaPrimitiveType)
+                .apply { isAccessible = true }
+        }.getOrNull()
+        if (setVisibility != null) {
+            runtime.xposed.hook(setVisibility)
+                .setExceptionMode(XposedInterface.ExceptionMode.PASSTHROUGH)
+                .intercept { chain ->
+                    val thiz = chain.thisObject
+                    if (thiz == null || !followViewType.isInstance(thiz)) {
+                        return@intercept chain.proceed()
+                    }
+                    if (BbplusSettings.PURIFY_FANS_CLUB_BTN !in BbplusSettings.getPurifyLivePopups(runtime.prefs)) {
+                        return@intercept chain.proceed()
+                    }
+                    if (fansClubGoneLogged.compareAndSet(false, true)) {
+                        runtime.log("[FansClub] setVisibility forced to GONE")
+                    }
+                    chain.proceed(arrayOf(View.GONE))
+                }
+            runtime.log(
+                "LiveRoomEntranceHook installed on ${setVisibility.declaringClass.name}.setVisibility" +
+                    " (guarded to ${followViewType.name})",
+            )
+        }
+
+        // 3 个 @JvmOverloads 构造器最终都委派到参数最多的那个，只挂最内层，避免重复执行。
+        val ctor = followViewType.declaredConstructors
+            .filter { it.parameterTypes.isNotEmpty() && it.parameterTypes[0] == Context::class.java }
+            .maxByOrNull { it.parameterCount }
+            ?.apply { isAccessible = true }
+            ?: run {
+                runtime.log("LiveRoomEntranceHook skipped: LiveBottomFollowButtonView ctor not found")
+                return
+            }
+
+        runtime.xposed.hook(ctor)
+            .setExceptionMode(XposedInterface.ExceptionMode.PASSTHROUGH)
+            .intercept { chain ->
+                val result = chain.proceed()
+                runCatching {
+                    val thiz = chain.thisObject
+                    if (thiz is View &&
+                        BbplusSettings.PURIFY_FANS_CLUB_BTN in BbplusSettings.getPurifyLivePopups(runtime.prefs)
+                    ) {
+                        thiz.visibility = View.GONE
+                        if (fansClubGoneLogged.compareAndSet(false, true)) {
+                            runtime.log("[FansClub] button hidden at construction")
+                        }
+                    }
+                }.onFailure { runtime.log("FansClub ctor hide failed", it) }
+                result
+            }
+        runtime.log("LiveRoomEntranceHook installed on ${followViewType.name}.<init>(${ctor.parameterCount} args)")
     }
 
     private fun hideParentSlot(view: View) {
@@ -254,11 +325,15 @@ class LiveRoomEntranceHook(private val runtime: BbplusRuntime) {
         runCatching { runtime.classLoader.loadClass(name) }.getOrNull()
 
     private companion object {
-        const val CLASS_FAST_GIFT_ENTRANCE =
+        const val CLASS_FAST_GIFT_ENTRANCE_918 =
+            "com.bilibili.bililive.biz.interactions.fastgift.bottom.ui.d"
+        const val CLASS_FAST_GIFT_ENTRANCE_970 =
             "com.bilibili.bililive.biz.interactions.fastgift.bottom.ui.c"
         const val CLASS_LYNX_VIEW = "com.lynx.tasm.LynxView"
         const val CLASS_LYNX_TEMPLATE_PROVIDER =
             "com.bilibili.lib.lynx.BiliLynxTemplateProvider"
+        const val CLASS_FANS_CLUB_ENTRANCE =
+            "com.bilibili.bililive.room.ui.roomv3.followbottom.LiveBottomFollowButtonView"
         const val CLASS_OUTER_PANEL_VIEW =
             "com.bilibili.bililive.room.ui.roomv3.settinginteractionpanel.widget.LiveOuterPanelViewV2"
         const val TOP_OPERATION_RIGHT_LYNX_CONTAINER_ID = 0x7f0961f6

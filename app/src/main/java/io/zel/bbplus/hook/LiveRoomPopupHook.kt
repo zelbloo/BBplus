@@ -88,7 +88,10 @@ class LiveRoomPopupHook(private val runtime: BbplusRuntime) {
                 setReferenceField(scope, "recommendCardDetail", null)
             }
             if (BbplusSettings.PURIFY_SHOPPING_SELECTED in enabled) {
+                // 9.18.0 移除 selectedGoods；改为清理购物精选相关的新字段（存在则清，不存在跳过）
                 setReferenceField(scope, "selectedGoods", null)
+                setReferenceField(scope, "bubblesDetail", null)
+                setReferenceField(scope, "h5JumpWindowInfoList", null)
             }
         } else if (cls === liveGoodsCardInfo || cls === liveRecommendCardGoods) {
             blocked = BbplusSettings.PURIFY_SHOPPING_CARD in enabled
@@ -106,11 +109,16 @@ class LiveRoomPopupHook(private val runtime: BbplusRuntime) {
                 setBooleanField(scope, "showReserveDetail", false)
             }
         } else if (cls === biliLiveRoomUserInfo) {
+            // 9.18.0 移除了 functionCard / taskInfo 两个字段：
+            // - 投喂卡改由 roomInfo/userReward 侧承载，字段不存在时按空操作跳过
+            // - 电池任务改由 extraConfig 侧承载
             if (BbplusSettings.PURIFY_GIFT in enabled) {
                 getFieldOrNull(scope, "functionCard")?.let { setReferenceField(it, "sengGiftCard", null) }
+                setReferenceField(getFieldOrNull(scope, "userReward") ?: scope, "rewardInfo", null)
             }
             if (BbplusSettings.PURIFY_TASK in enabled) {
                 setReferenceField(scope, "taskInfo", null)
+                getFieldOrNull(scope, "extraConfig")?.let { setReferenceField(it, "taskInfo", null) }
             }
         } else if (cls === liveShoppingGotoBuyInfo) {
             blocked = BbplusSettings.PURIFY_GOTO_BUY in enabled

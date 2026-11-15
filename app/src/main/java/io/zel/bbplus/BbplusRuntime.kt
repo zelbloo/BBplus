@@ -45,18 +45,27 @@ class BbplusRuntime internal constructor(
                 logger = log,
             )
             runtime.log("BBplus runtime starting for $packageName")
-            SettingsPanel.install(runtime)
-            DmActivityMetaHook(runtime).startHook()
-            VideoMentionGameHook(runtime).startHook()
-            PlayerWatermarkHook(runtime).startHook()
-            ShareToOverflowHook(runtime).startHook()
-            LiveRoomPopupHook(runtime).startHook()
-            LiveRoomSensorRotationHook(runtime).startHook()
-            LiveRoomEntranceHook(runtime).startHook()
-            HomeFeedSizeHook(runtime).startHook()
-            HomeFeedFilterHook(runtime).startHook()
-            DynamicGameCardHook(runtime).startHook()
-            SpaceH5GameCardHook(runtime).startHook()
+
+            // 每个 hook 单元独立隔离：任一 hook 因宿主版本差异失败（类不存在、方法抽象无法挂、
+            // 签名不匹配等）都只记录日志，绝不能让宿主启动流程崩溃。
+            fun install(name: String, block: () -> Unit) {
+                runCatching(block).onFailure {
+                    runtime.log("$name failed to install (skipped)", it)
+                }
+            }
+
+            install("SettingsPanel") { SettingsPanel.install(runtime) }
+            install("DmActivityMetaHook") { DmActivityMetaHook(runtime).startHook() }
+            install("VideoMentionGameHook") { VideoMentionGameHook(runtime).startHook() }
+            install("PlayerWatermarkHook") { PlayerWatermarkHook(runtime).startHook() }
+            install("ShareToOverflowHook") { ShareToOverflowHook(runtime).startHook() }
+            install("LiveRoomPopupHook") { LiveRoomPopupHook(runtime).startHook() }
+            install("LiveRoomSensorRotationHook") { LiveRoomSensorRotationHook(runtime).startHook() }
+            install("LiveRoomEntranceHook") { LiveRoomEntranceHook(runtime).startHook() }
+            install("HomeFeedSizeHook") { HomeFeedSizeHook(runtime).startHook() }
+            install("HomeFeedFilterHook") { HomeFeedFilterHook(runtime).startHook() }
+            install("DynamicGameCardHook") { DynamicGameCardHook(runtime).startHook() }
+            install("SpaceH5GameCardHook") { SpaceH5GameCardHook(runtime).startHook() }
             runtime.log("BBplus runtime hooks installed")
         }
     }

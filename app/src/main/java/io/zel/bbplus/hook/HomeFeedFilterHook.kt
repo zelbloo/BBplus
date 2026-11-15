@@ -19,14 +19,27 @@ class HomeFeedFilterHook(private val runtime: BbplusRuntime) {
     }
 
     private fun hookPegasusParser() {
-        val parserClass = loadClass("com.bilibili.pegasus.request.h") ?: run {
+        // 9.18.0: 转换器从 com.bilibili.pegasus.request.h 迁到 .n（h 在 9.18 变成 Pair/String 工具类）
+        val parserClass = loadClass(PARSER_918) ?: loadClass(PARSER_970) ?: run {
             runtime.log("HomeFeedFilterHook: parser class not found")
             return
         }
-        val convertMethod = findMethod(parserClass, "convert", Any::class.java) ?: run {
-            runtime.log("HomeFeedFilterHook: convert method not found")
-            return
-        }
+
+        // 9.18 的 n 只保留 a(ResponseBody)->GeneralResponse 与桥接 convert；
+        // 9.7 的 h 有 convert(Object) 与 convert(ResponseBody)。
+        // 注意：模块不依赖 okhttp3，ResponseBody 只能按类名反射取，不能直接引用类型。
+        val responseBodyType = runCatching {
+            runtime.classLoader.loadClass("okhttp3.ResponseBody")
+        }.getOrNull()
+
+        val convertMethod =
+            findMethod(parserClass, "convert", Any::class.java)
+                ?: responseBodyType?.let { findMethod(parserClass, "convert", it) }
+                ?: responseBodyType?.let { findMethod(parserClass, "a", it) }
+                ?: run {
+                    runtime.log("HomeFeedFilterHook: convert method not found on ${parserClass.name}")
+                    return
+                }
 
         runtime.xposed.hook(convertMethod)
             .setExceptionMode(XposedInterface.ExceptionMode.PASSTHROUGH)
@@ -37,7 +50,7 @@ class HomeFeedFilterHook(private val runtime: BbplusRuntime) {
                 }.onFailure { runtime.log("HomeFeedFilterHook filter failed", it) }
                 result
             }
-        runtime.log("HomeFeedFilterHook: hooked ${parserClass.name}.convert")
+        runtime.log("HomeFeedFilterHook: hooked ${parserClass.name}.${convertMethod.name}")
     }
 
     private fun filterFeedItems(response: Any?) {
@@ -270,6 +283,9 @@ class HomeFeedFilterHook(private val runtime: BbplusRuntime) {
     }
 
     private companion object {
+        const val PARSER_918 = "com.bilibili.pegasus.request.n"
+        const val PARSER_970 = "com.bilibili.pegasus.request.h"
+
         val AD_TYPES = setOf("ad", "cm", "cm_v2", "small_cover_v2_ad", "large_cover_v9")
         val LIVE_TYPES = setOf("live", "live_room")
         val PICTURE_TYPES = setOf("picture", "vertical")

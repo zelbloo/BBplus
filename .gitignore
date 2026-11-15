@@ -1,4 +1,5 @@
 .gradle/
+.gradle-home/
 build/
 .dsh/
 local.properties
@@ -6,4 +7,5 @@ local.properties
 .idea/
 .kotlin/
 keystore/
+work/
 *.log

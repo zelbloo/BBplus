@@ -1231,6 +1231,7 @@ object SettingsPanel {
                 BbplusSettings.PURIFY_POPULARITY_TICKET -> "直播间人气票入口"
                 BbplusSettings.PURIFY_SHOPPING_CART_BTN -> "直播间购物车按钮"
                 BbplusSettings.PURIFY_PLAY_WITH_ME -> "直播间帮我玩按钮"
+                BbplusSettings.PURIFY_FANS_CLUB_BTN -> "直播间底部「粉丝团」入口按钮"
                 BbplusSettings.PURIFY_PK_WIDGET -> "直播间PK贴片"
                 else -> ""
             }

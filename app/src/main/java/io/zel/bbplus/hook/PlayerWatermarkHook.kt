@@ -11,8 +11,11 @@ import java.util.concurrent.atomic.AtomicInteger
 class PlayerWatermarkHook(private val runtime: BbplusRuntime) {
 
     fun startHook() {
+        // 9.18.0: IPlayerLayer 实现从 watermark.c 迁到 watermark.b（c 变成 Compose lambda）
         val layerType = runCatching {
-            runtime.classLoader.loadClass("com.bilibili.ship.theseus.cheese.player.watermark.c")
+            runtime.classLoader.loadClass(WATERMARK_LAYER_918)
+        }.getOrNull() ?: runCatching {
+            runtime.classLoader.loadClass(WATERMARK_LAYER_970)
         }.getOrNull() ?: run {
             runtime.log("PlayerWatermarkHook skipped: cheese watermark layer not found")
             return
@@ -171,6 +174,12 @@ class PlayerWatermarkHook(private val runtime: BbplusRuntime) {
                 chain.proceed()
             }
         runtime.log("PlayerWatermarkHook diag installed on $tag")
+    }
+
+    private companion object {
+        // 9.18.0 优先，9.7.0 回落
+        const val WATERMARK_LAYER_918 = "com.bilibili.ship.theseus.cheese.player.watermark.b"
+        const val WATERMARK_LAYER_970 = "com.bilibili.ship.theseus.cheese.player.watermark.c"
     }
 
     private val diagCounters = HashMap<String, AtomicInteger>()

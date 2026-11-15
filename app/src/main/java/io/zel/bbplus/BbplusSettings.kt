@@ -24,6 +24,7 @@ object BbplusSettings {
     const val PURIFY_POPULARITY_TICKET = "popularityTicket"
     const val PURIFY_SHOPPING_CART_BTN = "shoppingCartBtn"
     const val PURIFY_PLAY_WITH_ME = "playWithMe"
+    const val PURIFY_FANS_CLUB_BTN = "fansClubBtn"
     const val PURIFY_PK_WIDGET = "pkWidget"
 
     val purifyLabels = listOf(
@@ -38,6 +39,7 @@ object BbplusSettings {
         PURIFY_POPULARITY_TICKET to "隐藏人气票按钮",
         PURIFY_SHOPPING_CART_BTN to "隐藏购物车按钮",
         PURIFY_PLAY_WITH_ME to "隐藏帮我玩按钮",
+        PURIFY_FANS_CLUB_BTN to "隐藏粉丝团按钮",
         PURIFY_PK_WIDGET to "隐藏PK贴片",
     )
 

@@ -7,17 +7,21 @@ import io.zel.bbplus.BbplusSettings
 class DynamicGameCardHook(private val runtime: BbplusRuntime) {
 
     fun startHook() {
+        // 9.18.0: 附加卡片类从 fS.L0 迁到 DS.S0（fS 包从 297 类缩到 5 类）；
+        // 字段名仍为 v（由 AdditionCommon.getCardType() 赋值）。
         val additionalType = runCatching {
-            runtime.classLoader.loadClass("fS.L0")
+            runtime.classLoader.loadClass(CARD_CLASS_918)
+        }.getOrNull() ?: runCatching {
+            runtime.classLoader.loadClass(CARD_CLASS_970)
         }.getOrNull() ?: run {
-            runtime.log("DynamicGameCardHook skipped: fS.L0 not found")
+            runtime.log("DynamicGameCardHook skipped: additional card class not found")
             return
         }
 
         val cardTypeField = runCatching {
-            additionalType.getDeclaredField("v").apply { isAccessible = true }
+            additionalType.getDeclaredField(CARD_TYPE_FIELD).apply { isAccessible = true }
         }.getOrNull() ?: run {
-            runtime.log("DynamicGameCardHook skipped: fS.L0.v not found")
+            runtime.log("DynamicGameCardHook skipped: ${additionalType.name}.${CARD_TYPE_FIELD} not found")
             return
         }
 
@@ -63,6 +67,9 @@ class DynamicGameCardHook(private val runtime: BbplusRuntime) {
     }
 
     private companion object {
+        const val CARD_CLASS_918 = "DS.S0"
+        const val CARD_CLASS_970 = "fS.L0"
+        const val CARD_TYPE_FIELD = "v"
         const val GAME_CARD_TYPE = "game"
     }
 }
